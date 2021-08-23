@@ -1,73 +1,62 @@
 import React, {Component} from 'react';
+import shortid from 'shortid';
+import './App.css';
+import ContactForm from './components/ContactForm';
+import Filter from './components/Filter';
+import ContactList from './components/ContactList';
 
 class App extends Component {
-  static defaultProps = {};
-
   static propTypes = {};
 
   state = {
     contacts: [],
-    name: '',
-    number: '',
+    filter: '',
   };
 
-  handleNameChange = (evt) => {
-    this.setState({
-      name: evt.currentTarget.value,
-    });
+  changeFilter = (evt) => {
+    this.setState({filter: evt.currentTarget.value});
   };
 
-  handleNumberChange = (evt) => {
-    this.setState({
-      number: evt.currentTarget.value,
-    });
+  addContact = ({ name, number }) => {
+    const foundNames = this.state.contacts.map(contact => contact.name.toLocaleLowerCase());
+    const lowerName = name.toLocaleLowerCase();
+    if(foundNames.includes(lowerName)){
+     return alert(`${name} is already in contacts`);
+    }
+      const contact = {
+        id: shortid.generate(),
+        name,
+        number,
+      };
+  
+      this.setState(({contacts})=> ({
+        contacts: [contact, ...contacts],
+      }));
+  };
+
+  deleteContact = (contactId) => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== contactId)
+    }));
+  };
+
+  getVisibleContacts = () => {
+    const {filter, contacts} = this.state;
+    const lowerCasedFilter = filter.toLocaleLowerCase();
+    return contacts.filter(contact => contact.name.toLocaleLowerCase().includes(lowerCasedFilter))
   };
 
   render() {
+    const { filter } = this.state;
+    const visibleContacts = this.getVisibleContacts();
+
     return (
       <div>
-        <h2>Phonebook</h2>
-        <form>
-          <label>
-          Name
-            <input
-              value={this.state.name}
-              type="text"
-              name="name"
-              pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-              title="Имя может состоять только из букв, апострофа, тире и пробелов. Например Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan и т. п."
-              required
-              onChange={this.handleNameChange}
-            />
-          </label>
-
-          <label>
-            Number
-            <input
-              value={this.state.number}
-              type="tel"
-              name="number"
-              pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-              title="Номер телефона должен состоять цифр и может содержать пробелы, тире, круглые скобки и может начинаться с +"
-              required
-              onChange={this.handleNumberChange}
-            />
-          </label>
-          <button
-            type="button"
-
-          >
-            Add contact
-          </button>
-
-        </form>
-
-        <div>
-          <h2>Contacts</h2>
-          <ul>
-            <li>Yaroslava</li>
-          </ul>
-        </div>
+        <h1 className="text">Phonebook</h1>
+        <ContactForm onSubmit={this.addContact} />
+        <h2 className="text">Contacts</h2>
+        <Filter value={filter} onChange={this.changeFilter} />
+        <ContactList contacts={visibleContacts} onDeleteContact={this.deleteContact} />
       </div>
     )}
 }
